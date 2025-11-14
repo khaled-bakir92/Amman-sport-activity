@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { SportCard } from "./sports-card";
 import { FootballMatchModal } from "./football-match-modal";
+import { VolleyballMatchModal } from "./volleyball-match-modal";
 
 const sports = [
   {
@@ -45,10 +46,13 @@ const sports = [
 
 export function SportsSection() {
   const [isFootballModalOpen, setIsFootballModalOpen] = useState(false);
+  const [isVolleyballModalOpen, setIsVolleyballModalOpen] = useState(false);
 
   const handleSportClick = (title: string) => {
     if (title === "Football") {
       setIsFootballModalOpen(true);
+    } else if (title === "Volleyball") {
+      setIsVolleyballModalOpen(true);
     }
   };
 
@@ -76,6 +80,10 @@ export function SportsSection() {
       <FootballMatchModal
         isOpen={isFootballModalOpen}
         onClose={() => setIsFootballModalOpen(false)}
+      />
+      <VolleyballMatchModal
+        isOpen={isVolleyballModalOpen}
+        onClose={() => setIsVolleyballModalOpen(false)}
       />
     </>
   );
