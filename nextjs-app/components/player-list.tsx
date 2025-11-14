@@ -14,14 +14,18 @@ interface PlayerListProps {
   players: Player[];
   bookedPositions: number[];
   onJoinClick: (playerId: number) => void;
+  myPosition?: number | null;
+  otherPlayersPositions?: number[];
 }
 
-export function PlayerList({ players, bookedPositions, onJoinClick }: PlayerListProps) {
+export function PlayerList({ players, bookedPositions, onJoinClick, myPosition, otherPlayersPositions = [] }: PlayerListProps) {
   const homePlayers = players.filter(p => p.team === 'home');
   const awayPlayers = players.filter(p => p.team === 'away');
 
   const renderPlayerItem = (player: Player) => {
     const isBooked = bookedPositions.includes(player.id);
+    const isMyPosition = player.id === myPosition;
+    const isOtherPlayer = otherPlayersPositions.includes(player.id);
 
     return (
       <div
@@ -63,26 +67,40 @@ export function PlayerList({ players, bookedPositions, onJoinClick }: PlayerList
 
         <Button
           size="sm"
-          disabled={isBooked}
+          disabled={isBooked || myPosition !== null}
           onClick={() => onJoinClick(player.id)}
           className={cn(
             "min-w-[80px] transition-all duration-200",
-            isBooked
+            isMyPosition
+              ? "bg-yellow-500 hover:bg-yellow-500 cursor-not-allowed"
+              : isOtherPlayer
               ? "bg-gray-400 hover:bg-gray-400 cursor-not-allowed"
+              : myPosition !== null
+              ? "bg-gray-300 hover:bg-gray-300 cursor-not-allowed"
               : player.team === 'home'
               ? "bg-primary-navy hover:bg-primary-blue"
               : "bg-accent-orange hover:bg-accent-orange/90"
           )}
         >
-          {isBooked ? (
+          {isMyPosition ? (
             <>
               <Check className="w-4 h-4 mr-1" />
-              Booked
+              Meine Position
+            </>
+          ) : isOtherPlayer ? (
+            <>
+              <Check className="w-4 h-4 mr-1" />
+              Gebucht
+            </>
+          ) : myPosition !== null ? (
+            <>
+              <span className="text-lg mr-1">-</span>
+              Voll
             </>
           ) : (
             <>
               <span className="text-lg mr-1">+</span>
-              Join
+              Beitreten
             </>
           )}
         </Button>
@@ -92,20 +110,6 @@ export function PlayerList({ players, bookedPositions, onJoinClick }: PlayerList
 
   return (
     <div className="space-y-6 h-full overflow-y-auto pr-2">
-      {/* Stats */}
-      <div className="bg-gradient-to-r from-primary-navy to-primary-blue text-white p-4 rounded-lg">
-        <div className="grid grid-cols-2 gap-4 text-center">
-          <div>
-            <p className="text-2xl font-bold">{bookedPositions.length}</p>
-            <p className="text-sm opacity-90">Booked</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold">{22 - bookedPositions.length}</p>
-            <p className="text-sm opacity-90">Available</p>
-          </div>
-        </div>
-      </div>
-
       {/* Home Team */}
       <div>
         <div className="flex items-center gap-2 mb-3">

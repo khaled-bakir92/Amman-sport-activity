@@ -4,9 +4,7 @@ import { useState } from "react";
 import { X, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FootballPitch } from "./football-pitch";
-import { PlayerList } from "./player-list";
 import { FootballPitch6vs6 } from "./football-pitch-6vs6";
-import { PlayerList6vs6 } from "./player-list-6vs6";
 import { MatchCalendar } from "./match-calendar";
 import { cn } from "@/lib/utils";
 
@@ -148,38 +146,76 @@ const initialPlayers6vs6: Player6vs6[] = [
 ];
 
 export function FootballMatchModal({ isOpen, onClose }: FootballMatchModalProps) {
-  const [bookedPositions, setBookedPositions] = useState<number[]>([]);
+  const [myBookedPosition, setMyBookedPosition] = useState<number | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<MatchDate | null>(null);
   const matches = getMatchSchedule();
 
-  const handleJoinClick = (playerId: number) => {
-    if (!bookedPositions.includes(playerId)) {
-      setBookedPositions([...bookedPositions, playerId]);
+  // Simuliere bereits gebuchte Positionen von anderen Spielern (Random für Demo)
+  const [otherPlayersPositions] = useState<number[]>(() => {
+    // Generiere zufällig 3-5 bereits gebuchte Positionen
+    const count = Math.floor(Math.random() * 3) + 3; // 3-5 Spieler
+    const positions: number[] = [];
+    while (positions.length < count) {
+      const randomPos = Math.floor(Math.random() * 22) + 1;
+      if (!positions.includes(randomPos)) {
+        positions.push(randomPos);
+      }
+    }
+    return positions;
+  });
+
+  // Alle gebuchten Positionen (meine + andere)
+  const allBookedPositions = myBookedPosition
+    ? [...otherPlayersPositions, myBookedPosition]
+    : otherPlayersPositions;
+
+  const handleJoinMatch = () => {
+    // Finde eine zufällige verfügbare Position
+    const maxPositions = selectedMatch?.type === '6vs6' ? 18 : 22;
+    const availablePositions = Array.from({ length: maxPositions }, (_, i) => i + 1)
+      .filter(id => !otherPlayersPositions.includes(id));
+
+    if (availablePositions.length > 0 && myBookedPosition === null) {
+      const randomPosition = availablePositions[Math.floor(Math.random() * availablePositions.length)];
+      setMyBookedPosition(randomPosition);
     }
   };
 
   const handlePositionClick = (positionId: number) => {
-    // Remove from booked positions when clicking on pitch
-    setBookedPositions(bookedPositions.filter(id => id !== positionId));
+    // Wenn Position bereits von anderem Spieler gebucht ist, nichts tun
+    if (otherPlayersPositions.includes(positionId)) {
+      return;
+    }
+
+    // Wenn dies meine Position ist, entfernen
+    if (positionId === myBookedPosition) {
+      setMyBookedPosition(null);
+      return;
+    }
+
+    // Wenn ich noch keine Position habe, diese Position buchen
+    if (myBookedPosition === null) {
+      setMyBookedPosition(positionId);
+    }
   };
 
   const handleReset = () => {
-    setBookedPositions([]);
+    setMyBookedPosition(null);
   };
 
   const handleDateSelect = (match: MatchDate) => {
     setSelectedMatch(match);
-    setBookedPositions([]); // Reset bookings when selecting new date
+    setMyBookedPosition(null); // Reset bookings when selecting new date
   };
 
   const handleBackToCalendar = () => {
     setSelectedMatch(null);
-    setBookedPositions([]);
+    setMyBookedPosition(null);
   };
 
   const handleClose = () => {
     setSelectedMatch(null);
-    setBookedPositions([]);
+    setMyBookedPosition(null);
     onClose();
   };
 
@@ -246,139 +282,287 @@ export function FootballMatchModal({ isOpen, onClose }: FootballMatchModalProps)
               <MatchCalendar matches={matches} onDateSelect={handleDateSelect} />
             </div>
           ) : selectedMatch.type === '6vs6' ? (
-            /* 6vs6 Stadium & Player List View */
-            <div className="grid lg:grid-cols-[1.5fr,1fr] gap-6">
-              {/* Left: Stadium View */}
-              <div className="space-y-4">
-                <div className="bg-gray-50 rounded-lg p-4 border-2 border-gray-200">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-green-600">
+            /* 6vs6 Stadium & Action Panel */
+            <div className="grid lg:grid-cols-[1.5fr,1fr] gap-6 max-w-6xl mx-auto">
+              {/* Left: Stadium */}
+              <div className="space-y-3">
+                <div className="bg-gray-50 rounded-lg p-2 sm:p-3 border-2 border-gray-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-base font-semibold text-green-600">
                       6vs6 Football Pitch
                     </h3>
-                    <div className="flex items-center gap-3 text-sm">
+                    <div className="flex items-center gap-2 text-xs">
                       <div className="flex items-center gap-1">
-                        <div className="w-4 h-4 rounded-full bg-primary-navy"></div>
+                        <div className="w-3 h-3 rounded-full bg-primary-navy"></div>
                         <span className="text-gray-600">Team 1</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <div className="w-4 h-4 rounded-full bg-accent-orange"></div>
+                        <div className="w-3 h-3 rounded-full bg-accent-orange"></div>
                         <span className="text-gray-600">Team 2</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <div className="w-4 h-4 rounded-full bg-green-600"></div>
+                        <div className="w-3 h-3 rounded-full bg-green-600"></div>
                         <span className="text-gray-600">Team 3</span>
                       </div>
                     </div>
                   </div>
                   <FootballPitch6vs6
-                    bookedPositions={bookedPositions}
+                    bookedPositions={allBookedPositions}
                     onPositionClick={handlePositionClick}
+                    myPosition={myBookedPosition}
+                    otherPlayersPositions={otherPlayersPositions}
                   />
-                  <p className="text-sm text-gray-500 mt-3 text-center">
-                    Klicke auf eine gebuchte Position, um sie zu entfernen
+                  <p className="text-xs text-gray-500 mt-2 text-center">
+                    {myBookedPosition
+                      ? '✓ Position gebucht! Klicke zum Entfernen'
+                      : 'Klicke auf eine freie Position'}
                   </p>
                 </div>
 
-                {/* Match Info */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="bg-gradient-to-br from-green-600 to-green-700 text-white p-4 rounded-lg text-center">
-                    <p className="text-sm opacity-90">Datum</p>
-                    <p className="text-lg font-bold mt-1">
-                      {new Date(selectedMatch.date).toLocaleDateString('de-DE', {
-                        day: '2-digit',
-                        month: 'short'
-                      })}
-                    </p>
-                  </div>
-                  <div className="bg-gradient-to-br from-green-600 to-green-700 text-white p-4 rounded-lg text-center">
-                    <p className="text-sm opacity-90">Zeit</p>
-                    <p className="text-lg font-bold mt-1">{selectedMatch.time}</p>
-                  </div>
-                  <div className="bg-gradient-to-br from-green-600 to-green-700 text-white p-4 rounded-lg text-center">
-                    <p className="text-sm opacity-90">Ort</p>
-                    <p className="text-lg font-bold mt-1">{selectedMatch.location}</p>
+                {/* Compact Booking Statistics - 6vs6 */}
+                <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-2 border border-green-200">
+                  <div className="grid grid-cols-2 gap-2 text-center">
+                    <div className="bg-white rounded-lg p-2">
+                      <p className="text-lg font-bold text-green-600">{allBookedPositions.length}</p>
+                      <p className="text-[9px] text-gray-600">Gebucht</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-2">
+                      <p className="text-lg font-bold text-orange-600">{18 - allBookedPositions.length}</p>
+                      <p className="text-[9px] text-gray-600">Verfügbar</p>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Right: Player List */}
-              <div className="bg-gray-50 rounded-lg p-4 border-2 border-gray-200">
-                <h3 className="text-lg font-semibold text-green-600 mb-4">
-                  Verfügbare Spieler (6vs6)
-                </h3>
-                <PlayerList6vs6
-                  players={initialPlayers6vs6}
-                  bookedPositions={bookedPositions}
-                  onJoinClick={handleJoinClick}
-                />
+              {/* Right: Action Panel */}
+              <div className="space-y-4">
+                {/* Join Button */}
+                <div className="bg-gradient-to-br from-green-600 to-green-700 text-white rounded-lg p-6 text-center shadow-lg">
+                  {myBookedPosition ? (
+                    <>
+                      <div className="mb-4">
+                        <div className="w-16 h-16 mx-auto bg-yellow-400 rounded-full flex items-center justify-center mb-3 animate-pulse">
+                          <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <p className="text-lg font-bold">Du bist dabei!</p>
+                        <p className="text-sm opacity-90 mt-1">Position {myBookedPosition}</p>
+                      </div>
+                      <Button
+                        onClick={handleReset}
+                        variant="outline"
+                        className="w-full bg-white/10 border-white/20 text-white hover:bg-white/20"
+                      >
+                        Platz freigeben
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="mb-4">
+                        <div className="w-16 h-16 mx-auto bg-white/20 rounded-full flex items-center justify-center mb-3">
+                          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                          </svg>
+                        </div>
+                        <p className="text-lg font-bold">Match beitreten</p>
+                        <p className="text-sm opacity-90 mt-1">Zufällige Position</p>
+                      </div>
+                      <Button
+                        onClick={handleJoinMatch}
+                        className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white font-bold py-3"
+                      >
+                        Jetzt beitreten
+                      </Button>
+                    </>
+                  )}
+                </div>
+
+                {/* Match Info Cards */}
+                <div className="space-y-2">
+                  <div className="bg-white rounded-lg p-4 border-2 border-gray-200 flex items-center gap-3">
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-gray-500">Datum</p>
+                      <p className="font-semibold text-gray-900 truncate">
+                        {new Date(selectedMatch.date).toLocaleDateString('de-DE', {
+                          weekday: 'short',
+                          day: '2-digit',
+                          month: 'short'
+                        })}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-lg p-4 border-2 border-gray-200 flex items-center gap-3">
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-gray-500">Zeit</p>
+                      <p className="font-semibold text-gray-900">{selectedMatch.time} Uhr</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-lg p-4 border-2 border-gray-200 flex items-center gap-3">
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-gray-500">Ort</p>
+                      <p className="font-semibold text-gray-900 text-sm truncate">{selectedMatch.location}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           ) : (
-            /* 11vs11 Stadium & Player List View */
-            <div className="grid lg:grid-cols-[1.5fr,1fr] gap-6">
-              {/* Left: Stadium View */}
-              <div className="space-y-4">
-                <div className="bg-gray-50 rounded-lg p-4 border-2 border-gray-200">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-primary-navy">
+            /* 11vs11 Stadium & Action Panel */
+            <div className="grid lg:grid-cols-[1.5fr,1fr] gap-6 max-w-6xl mx-auto">
+              {/* Left: Stadium */}
+              <div className="space-y-3">
+                <div className="bg-gray-50 rounded-lg p-2 sm:p-3 border-2 border-gray-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-base font-semibold text-primary-navy">
                       Football Stadium
                     </h3>
-                    <div className="flex items-center gap-4 text-sm">
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-full bg-primary-navy"></div>
-                        <span className="text-gray-600">Home Team</span>
+                    <div className="flex items-center gap-2 text-xs">
+                      <div className="flex items-center gap-1">
+                        <div className="w-3 h-3 rounded-full bg-primary-navy"></div>
+                        <span className="text-gray-600">Home</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-full bg-accent-orange"></div>
-                        <span className="text-gray-600">Away Team</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-full bg-white/20 border-2 border-white/40"></div>
-                        <span className="text-gray-600">Available</span>
+                      <div className="flex items-center gap-1">
+                        <div className="w-3 h-3 rounded-full bg-accent-orange"></div>
+                        <span className="text-gray-600">Away</span>
                       </div>
                     </div>
                   </div>
                   <FootballPitch
-                    bookedPositions={bookedPositions}
+                    bookedPositions={allBookedPositions}
                     onPositionClick={handlePositionClick}
+                    myPosition={myBookedPosition}
+                    otherPlayersPositions={otherPlayersPositions}
                   />
-                  <p className="text-sm text-gray-500 mt-3 text-center">
-                    Klicke auf eine gebuchte Position, um sie zu entfernen
+                  <p className="text-xs text-gray-500 mt-2 text-center">
+                    {myBookedPosition
+                      ? '✓ Position gebucht! Klicke zum Entfernen'
+                      : 'Klicke auf eine freie Position'}
                   </p>
                 </div>
 
-                {/* Match Info */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="bg-gradient-to-br from-primary-navy to-primary-blue text-white p-4 rounded-lg text-center">
-                    <p className="text-sm opacity-90">Datum</p>
-                    <p className="text-lg font-bold mt-1">
-                      {new Date(selectedMatch.date).toLocaleDateString('de-DE', {
-                        day: '2-digit',
-                        month: 'short'
-                      })}
-                    </p>
-                  </div>
-                  <div className="bg-gradient-to-br from-primary-navy to-primary-blue text-white p-4 rounded-lg text-center">
-                    <p className="text-sm opacity-90">Zeit</p>
-                    <p className="text-lg font-bold mt-1">{selectedMatch.time}</p>
-                  </div>
-                  <div className="bg-gradient-to-br from-accent-orange to-accent-orange/80 text-white p-4 rounded-lg text-center">
-                    <p className="text-sm opacity-90">Ort</p>
-                    <p className="text-lg font-bold mt-1">{selectedMatch.location}</p>
+                {/* Compact Booking Statistics */}
+                <div className="bg-gradient-to-r from-blue-50 to-orange-50 rounded-lg p-2 border border-blue-200">
+                  <div className="grid grid-cols-2 gap-2 text-center">
+                    <div className="bg-white rounded-lg p-2">
+                      <p className="text-lg font-bold text-blue-900">{allBookedPositions.length}</p>
+                      <p className="text-[9px] text-gray-600">Gebucht</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-2">
+                      <p className="text-lg font-bold text-orange-600">{22 - allBookedPositions.length}</p>
+                      <p className="text-[9px] text-gray-600">Verfügbar</p>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Right: Player List */}
-              <div className="bg-gray-50 rounded-lg p-4 border-2 border-gray-200">
-                <h3 className="text-lg font-semibold text-primary-navy mb-4">
-                  Verfügbare Spieler
-                </h3>
-                <PlayerList
-                  players={initialPlayers}
-                  bookedPositions={bookedPositions}
-                  onJoinClick={handleJoinClick}
-                />
+              {/* Right: Action Panel */}
+              <div className="space-y-4">
+                {/* Join Button */}
+                <div className="bg-gradient-to-br from-primary-navy to-primary-blue text-white rounded-lg p-6 text-center shadow-lg">
+                  {myBookedPosition ? (
+                    <>
+                      <div className="mb-4">
+                        <div className="w-16 h-16 mx-auto bg-yellow-400 rounded-full flex items-center justify-center mb-3 animate-pulse">
+                          <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <p className="text-lg font-bold">Du bist dabei!</p>
+                        <p className="text-sm opacity-90 mt-1">Position {myBookedPosition}</p>
+                      </div>
+                      <Button
+                        onClick={handleReset}
+                        variant="outline"
+                        className="w-full bg-white/10 border-white/20 text-white hover:bg-white/20"
+                      >
+                        Platz freigeben
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="mb-4">
+                        <div className="w-16 h-16 mx-auto bg-white/20 rounded-full flex items-center justify-center mb-3">
+                          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                          </svg>
+                        </div>
+                        <p className="text-lg font-bold">Match beitreten</p>
+                        <p className="text-sm opacity-90 mt-1">Zufällige Position</p>
+                      </div>
+                      <Button
+                        onClick={handleJoinMatch}
+                        className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white font-bold py-3"
+                      >
+                        Jetzt beitreten
+                      </Button>
+                    </>
+                  )}
+                </div>
+
+                {/* Match Info Cards */}
+                <div className="space-y-2">
+                  <div className="bg-white rounded-lg p-4 border-2 border-gray-200 flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-gray-500">Datum</p>
+                      <p className="font-semibold text-gray-900 truncate">
+                        {new Date(selectedMatch.date).toLocaleDateString('de-DE', {
+                          weekday: 'short',
+                          day: '2-digit',
+                          month: 'short'
+                        })}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-lg p-4 border-2 border-gray-200 flex items-center gap-3">
+                    <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-gray-500">Zeit</p>
+                      <p className="font-semibold text-gray-900">{selectedMatch.time} Uhr</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-lg p-4 border-2 border-gray-200 flex items-center gap-3">
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-gray-500">Ort</p>
+                      <p className="font-semibold text-gray-900 text-sm truncate">{selectedMatch.location}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}

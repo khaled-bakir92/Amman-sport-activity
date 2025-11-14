@@ -13,6 +13,8 @@ interface Position {
 interface FootballPitchProps {
   bookedPositions: number[];
   onPositionClick?: (positionId: number) => void;
+  myPosition?: number | null;
+  otherPlayersPositions?: number[];
 }
 
 // 4-3-3 formation for both teams
@@ -44,7 +46,7 @@ const positions: Position[] = [
   { id: 22, x: 53, y: 80, team: 'away', role: 'LW' },
 ];
 
-export function FootballPitch({ bookedPositions, onPositionClick }: FootballPitchProps) {
+export function FootballPitch({ bookedPositions, onPositionClick, myPosition, otherPlayersPositions = [] }: FootballPitchProps) {
   return (
     <div className="relative w-full aspect-[16/10] bg-gradient-to-br from-green-600 to-green-700 rounded-lg shadow-2xl overflow-hidden border-4 border-white">
       {/* Pitch markings */}
@@ -83,7 +85,10 @@ export function FootballPitch({ bookedPositions, onPositionClick }: FootballPitc
       {/* Player positions */}
       {positions.map((pos) => {
         const isBooked = bookedPositions.includes(pos.id);
-        const isClickable = !isBooked && onPositionClick;
+        const isMyPosition = pos.id === myPosition;
+        const isOtherPlayer = otherPlayersPositions.includes(pos.id);
+        const isAvailable = !isBooked;
+        const isClickable = (isAvailable || isMyPosition) && onPositionClick;
 
         return (
           <div
@@ -103,10 +108,10 @@ export function FootballPitch({ bookedPositions, onPositionClick }: FootballPitc
               <div
                 className={cn(
                   "w-8 h-8 md:w-10 md:h-10 rounded-full border-3 transition-all duration-300 flex items-center justify-center",
-                  isBooked
-                    ? pos.team === 'home'
-                      ? "bg-primary-navy border-white shadow-lg"
-                      : "bg-accent-orange border-white shadow-lg"
+                  isMyPosition
+                    ? "bg-yellow-400 border-yellow-500 shadow-xl animate-pulse"
+                    : isOtherPlayer
+                    ? "bg-gray-400 border-gray-500 shadow-lg"
                     : "bg-white/20 border-white/40 backdrop-blur-sm hover:bg-white/40"
                 )}
               >
@@ -123,7 +128,8 @@ export function FootballPitch({ bookedPositions, onPositionClick }: FootballPitc
                 "group-hover:opacity-100"
               )}>
                 {pos.role} - Player {pos.id}
-                {isBooked && " (Booked)"}
+                {isMyPosition && " (Deine Position)"}
+                {isOtherPlayer && " (Gebucht)"}
               </div>
             </div>
           </div>
