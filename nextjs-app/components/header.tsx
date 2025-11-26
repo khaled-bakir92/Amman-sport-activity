@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
+import { AuthButton } from "@/components/auth-button";
 
 const navLinks = [
   { href: "#sports", label: "Sports" },
@@ -39,18 +40,21 @@ export function Header() {
           </Link>
 
           {/* Desktop Navigation - Right Side */}
-          <ul className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <li key={link.href}>
-                <Link
-                  href={link.href}
-                  className="text-white hover:text-accent-orange transition-colors duration-200 font-medium"
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <div className="hidden md:flex items-center gap-6">
+            <ul className="flex items-center gap-8">
+              {navLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-white hover:text-accent-orange transition-colors duration-200 font-medium"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <AuthButton />
+          </div>
 
           {/* Mobile Menu Button */}
           <button
@@ -82,6 +86,10 @@ export function Header() {
                 </li>
               ))}
             </ul>
+            {/* Auth Button für Mobile */}
+            <div className="mt-4 px-4">
+              <AuthButton />
+            </div>
           </div>
         )}
       </nav>

@@ -1,11 +1,15 @@
 "use client";
 
+import { cn } from "@/lib/utils";
+
 interface VolleyballCourtProps {
   bookedPositions: number[];
-  onPositionClick: (positionId: number) => void;
+  onPositionClick?: (positionId: number) => void;
+  myPosition?: number | null;
+  otherPlayersPositions?: number[];
 }
 
-export function VolleyballCourt({ bookedPositions, onPositionClick }: VolleyballCourtProps) {
+export function VolleyballCourt({ bookedPositions, onPositionClick, myPosition, otherPlayersPositions = [] }: VolleyballCourtProps) {
   // 18 positions: 6 left team, 6 right team, 6 substitutes
   const positions = Array.from({ length: 18 }, (_, i) => i + 1);
 
@@ -78,6 +82,10 @@ export function VolleyballCourt({ bookedPositions, onPositionClick }: Volleyball
             const style = getPositionStyle(positionId);
             const teamColor = getTeamColor(positionId);
             const booked = isBooked(positionId);
+            const isMyPosition = positionId === myPosition;
+            const isOtherPlayer = otherPlayersPositions.includes(positionId);
+            const isAvailable = !booked;
+            const isClickable = (isAvailable || isMyPosition) && onPositionClick;
 
             return (
               <div
@@ -86,20 +94,20 @@ export function VolleyballCourt({ bookedPositions, onPositionClick }: Volleyball
                 className="flex items-center justify-center relative z-10"
               >
                 <button
-                  onClick={() => booked && onPositionClick(positionId)}
-                  disabled={!booked}
-                  className={`
-                    w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16
-                    rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-sm
-                    transition-all duration-300 transform relative
-                    ${booked
-                      ? 'cursor-pointer hover:scale-110 shadow-lg active:scale-95'
-                      : 'cursor-not-allowed opacity-30 border border-dashed sm:border-2'
-                    }
-                  `}
+                  onClick={() => isClickable && onPositionClick(positionId)}
+                  disabled={!isClickable}
+                  className={cn(
+                    "w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16",
+                    "rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-sm",
+                    "transition-all duration-300 transform relative",
+                    isMyPosition && "bg-yellow-400 border-yellow-500 shadow-xl animate-pulse cursor-pointer hover:scale-110",
+                    isOtherPlayer && "shadow-lg cursor-not-allowed",
+                    !booked && "cursor-pointer hover:scale-110 opacity-30 border border-dashed sm:border-2",
+                    booked && !isMyPosition && !isOtherPlayer && "cursor-not-allowed opacity-30 border border-dashed sm:border-2"
+                  )}
                   style={{
-                    backgroundColor: booked ? teamColor : 'transparent',
-                    borderColor: !booked ? teamColor : 'transparent',
+                    backgroundColor: isMyPosition ? undefined : (booked ? teamColor : 'transparent'),
+                    borderColor: !booked || isMyPosition ? teamColor : 'transparent',
                   }}
                   aria-label={`Position ${positionId}`}
                 >
@@ -110,7 +118,7 @@ export function VolleyballCourt({ bookedPositions, onPositionClick }: Volleyball
                         <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                       </svg>
                       {/* Position number badge */}
-                      <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 bg-white text-[10px] sm:text-xs font-bold rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center shadow-md" style={{ color: teamColor }}>
+                      <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 bg-white text-[10px] sm:text-xs font-bold rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center shadow-md" style={{ color: isMyPosition ? '#eab308' : teamColor }}>
                         {positionId}
                       </span>
                     </>
@@ -139,6 +147,10 @@ export function VolleyballCourt({ bookedPositions, onPositionClick }: Volleyball
             {positions.slice(12, 18).map((positionId) => {
               const teamColor = getTeamColor(positionId);
               const booked = isBooked(positionId);
+              const isMyPosition = positionId === myPosition;
+              const isOtherPlayer = otherPlayersPositions.includes(positionId);
+              const isAvailable = !booked;
+              const isClickable = (isAvailable || isMyPosition) && onPositionClick;
 
               return (
                 <div
@@ -146,20 +158,20 @@ export function VolleyballCourt({ bookedPositions, onPositionClick }: Volleyball
                   className="flex items-center justify-center"
                 >
                   <button
-                    onClick={() => booked && onPositionClick(positionId)}
-                    disabled={!booked}
-                    className={`
-                      w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16
-                      rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-sm
-                      transition-all duration-300 transform relative
-                      ${booked
-                        ? 'cursor-pointer hover:scale-110 shadow-lg active:scale-95'
-                        : 'cursor-not-allowed opacity-30 border border-dashed sm:border-2'
-                      }
-                    `}
+                    onClick={() => isClickable && onPositionClick(positionId)}
+                    disabled={!isClickable}
+                    className={cn(
+                      "w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16",
+                      "rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-sm",
+                      "transition-all duration-300 transform relative",
+                      isMyPosition && "bg-yellow-400 border-yellow-500 shadow-xl animate-pulse cursor-pointer hover:scale-110",
+                      isOtherPlayer && "shadow-lg cursor-not-allowed",
+                      !booked && "cursor-pointer hover:scale-110 opacity-30 border border-dashed sm:border-2",
+                      booked && !isMyPosition && !isOtherPlayer && "cursor-not-allowed opacity-30 border border-dashed sm:border-2"
+                    )}
                     style={{
-                      backgroundColor: booked ? teamColor : 'transparent',
-                      borderColor: !booked ? teamColor : 'transparent',
+                      backgroundColor: isMyPosition ? undefined : (booked ? teamColor : 'transparent'),
+                      borderColor: !booked || isMyPosition ? teamColor : 'transparent',
                     }}
                     aria-label={`Substitute ${positionId}`}
                   >
@@ -168,7 +180,7 @@ export function VolleyballCourt({ bookedPositions, onPositionClick }: Volleyball
                         <svg className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                         </svg>
-                        <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 bg-white text-[10px] sm:text-xs font-bold rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center shadow-md" style={{ color: teamColor }}>
+                        <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 bg-white text-[10px] sm:text-xs font-bold rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center shadow-md" style={{ color: isMyPosition ? '#eab308' : teamColor }}>
                           {positionId}
                         </span>
                       </>

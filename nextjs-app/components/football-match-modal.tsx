@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { X, ArrowLeft } from "lucide-react";
+import { X, ArrowLeft, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FootballPitch } from "./football-pitch";
 import { FootballPitch6vs6 } from "./football-pitch-6vs6";
 import { MatchCalendar } from "./match-calendar";
+import { LoginPromptModal } from "./login-prompt-modal";
 import { cn } from "@/lib/utils";
+import { useSession, signIn } from "next-auth/react";
 
 interface Player {
   id: number;
@@ -146,8 +148,10 @@ const initialPlayers6vs6: Player6vs6[] = [
 ];
 
 export function FootballMatchModal({ isOpen, onClose }: FootballMatchModalProps) {
+  const { data: session, status } = useSession();
   const [myBookedPosition, setMyBookedPosition] = useState<number | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<MatchDate | null>(null);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const matches = getMatchSchedule();
 
   // Simuliere bereits gebuchte Positionen von anderen Spielern (Random für Demo)
@@ -170,6 +174,12 @@ export function FootballMatchModal({ isOpen, onClose }: FootballMatchModalProps)
     : otherPlayersPositions;
 
   const handleJoinMatch = () => {
+    // Prüfe ob User eingeloggt ist
+    if (!session) {
+      setShowLoginPrompt(true);
+      return;
+    }
+
     // Finde eine zufällige verfügbare Position
     const maxPositions = selectedMatch?.type === '6vs6' ? 18 : 22;
     const availablePositions = Array.from({ length: maxPositions }, (_, i) => i + 1)
@@ -182,6 +192,12 @@ export function FootballMatchModal({ isOpen, onClose }: FootballMatchModalProps)
   };
 
   const handlePositionClick = (positionId: number) => {
+    // Prüfe ob User eingeloggt ist
+    if (!session) {
+      setShowLoginPrompt(true);
+      return;
+    }
+
     // Wenn Position bereits von anderem Spieler gebucht ist, nichts tun
     if (otherPlayersPositions.includes(positionId)) {
       return;
@@ -222,7 +238,14 @@ export function FootballMatchModal({ isOpen, onClose }: FootballMatchModalProps)
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+    <>
+      <LoginPromptModal
+        isOpen={showLoginPrompt}
+        onClose={() => setShowLoginPrompt(false)}
+        sportName="dem Football-Match"
+      />
+
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
       <div
         className={cn(
           "relative w-full max-h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden",
@@ -568,6 +591,7 @@ export function FootballMatchModal({ isOpen, onClose }: FootballMatchModalProps)
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
