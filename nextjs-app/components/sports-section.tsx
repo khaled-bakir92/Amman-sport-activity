@@ -5,6 +5,7 @@ import { SportCard } from "./sports-card";
 import { FootballMatchModal } from "./football-match-modal";
 import { VolleyballMatchModal } from "./volleyball-match-modal";
 import { BasketballMatchModal } from "./basketball-match-modal";
+import { KickboxingModal } from "./kickboxing-modal";
 
 const sports = [
   {
@@ -49,6 +50,7 @@ export function SportsSection() {
   const [isFootballModalOpen, setIsFootballModalOpen] = useState(false);
   const [isVolleyballModalOpen, setIsVolleyballModalOpen] = useState(false);
   const [isBasketballModalOpen, setIsBasketballModalOpen] = useState(false);
+  const [isKickboxingModalOpen, setIsKickboxingModalOpen] = useState(false);
 
   const handleSportClick = (title: string) => {
     if (title === "Football") {
@@ -57,6 +59,8 @@ export function SportsSection() {
       setIsVolleyballModalOpen(true);
     } else if (title === "Basketball") {
       setIsBasketballModalOpen(true);
+    } else if (title === "Kickboxing") {
+      setIsKickboxingModalOpen(true);
     }
   };
 
@@ -92,6 +96,10 @@ export function SportsSection() {
       <BasketballMatchModal
         isOpen={isBasketballModalOpen}
         onClose={() => setIsBasketballModalOpen(false)}
+      />
+      <KickboxingModal
+        isOpen={isKickboxingModalOpen}
+        onClose={() => setIsKickboxingModalOpen(false)}
       />
     </>
   );
