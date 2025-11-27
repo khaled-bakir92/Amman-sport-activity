@@ -7,44 +7,9 @@ import { VolleyballMatchModal } from "./volleyball-match-modal";
 import { BasketballMatchModal } from "./basketball-match-modal";
 import { KickboxingModal } from "./kickboxing-modal";
 
-const sports = [
-  {
-    title: "Football",
-    description: "Play football with us! Regular matches for all skill levels. Team spirit and fun guaranteed.",
-    image: "/images/football.png",
-    tags: ["Group", "Outdoor"],
-  },
-  {
-    title: "Volleyball",
-    description: "Group volleyball sessions in Amman. Perfect for social interaction and fitness.",
-    image: "/images/volleyball.png",
-    tags: ["Group", "Indoor/Outdoor"],
-  },
-  {
-    title: "Kickboxing",
-    description: "Intensive kickboxing training for fitness and self-defense. Private lessons also available!",
-    image: "/images/Kickboxing.png",
-    tags: ["Group & Private", "Indoor"],
-  },
-  {
-    title: "Yoga",
-    description: "Relaxation and flexibility through yoga sessions. For body and mind in balance.",
-    image: "/images/Yoga.png",
-    tags: ["Group", "Indoor"],
-  },
-  {
-    title: "Basketball",
-    description: "Dynamic basketball games with other sports enthusiasts in Amman.",
-    image: "/images/basketball.png",
-    tags: ["Group", "Outdoor"],
-  },
-  {
-    title: "Gym Training",
-    description: "Professional gym training with private trainers. Personalized workout plans to achieve your fitness goals.",
-    image: "/images/gym.png",
-    tags: ["Private & Group", "Indoor"],
-  },
-];
+import { SPORTS_DATA } from "@/lib/constants";
+
+const sports = SPORTS_DATA;
 
 export function SportsSection() {
   const [isFootballModalOpen, setIsFootballModalOpen] = useState(false);
