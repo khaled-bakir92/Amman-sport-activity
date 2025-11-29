@@ -7,15 +7,12 @@ import { Location } from "@/components/location";
 import { Contact } from "@/components/contact";
 import { Footer } from "@/components/footer";
 
-import { MatchesList } from "@/components/matches-list";
-
 export default function Home() {
   return (
     <>
       <Header />
       <main>
         <Hero />
-        <MatchesList />
         <SportsSection />
         <PrivateLessons />
         <About />

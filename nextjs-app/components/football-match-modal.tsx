@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, ArrowLeft, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FootballPitch } from "./football-pitch";
@@ -23,11 +23,20 @@ interface Player6vs6 {
 }
 
 interface MatchDate {
+  id?: string;
   date: string;
   time: string;
   location: string;
   availableSpots: number;
+  maxPlayers?: number;
   type?: 'regular' | 'girls-only' | '6vs6';
+  matchType?: string | null;
+  price?: number;
+  bookings?: Array<{
+    userId: string;
+    userName: string;
+    status: string;
+  }>;
 }
 
 interface FootballMatchModalProps {
@@ -152,7 +161,27 @@ export function FootballMatchModal({ isOpen, onClose }: FootballMatchModalProps)
   const [myBookedPosition, setMyBookedPosition] = useState<number | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<MatchDate | null>(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-  const matches = getMatchSchedule();
+  const [matches, setMatches] = useState<MatchDate[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch football matches from API
+  useEffect(() => {
+    if (isOpen) {
+      setIsLoading(true);
+      fetch('/api/matches/football')
+        .then(res => res.json())
+        .then(data => {
+          setMatches(data);
+          setIsLoading(false);
+        })
+        .catch(error => {
+          console.error('Error fetching matches:', error);
+          setIsLoading(false);
+          // Fallback to mock data
+          setMatches(getMatchSchedule());
+        });
+    }
+  }, [isOpen]);
 
   // Simuliere bereits gebuchte Positionen von anderen Spielern (Random für Demo)
   const [otherPlayersPositions] = useState<number[]>(() => {
@@ -302,7 +331,19 @@ export function FootballMatchModal({ isOpen, onClose }: FootballMatchModalProps)
           {!selectedMatch ? (
             /* Calendar View */
             <div className="flex items-center justify-center py-2">
-              <MatchCalendar matches={matches} onDateSelect={handleDateSelect} />
+              {isLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-navy mx-auto mb-4"></div>
+                  <p className="text-gray-600">Lade Matches...</p>
+                </div>
+              ) : matches.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-600 mb-2">Keine Football Matches verfügbar</p>
+                  <p className="text-sm text-gray-500">Bitte später nochmal schauen</p>
+                </div>
+              ) : (
+                <MatchCalendar matches={matches} onDateSelect={handleDateSelect} />
+              )}
             </div>
           ) : selectedMatch.type === '6vs6' ? (
             /* 6vs6 Stadium & Action Panel */

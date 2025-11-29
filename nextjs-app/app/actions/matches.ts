@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 
 export async function createMatch(formData: FormData) {
     const sportType = formData.get("sportType") as string;
+    const matchType = formData.get("matchType") as string | null;
     const date = formData.get("date") as string;
     const time = formData.get("time") as string;
     const location = formData.get("location") as string;
@@ -20,6 +21,7 @@ export async function createMatch(formData: FormData) {
     await prisma.match.create({
         data: {
             sportType,
+            matchType: matchType || undefined,
             date: new Date(date),
             time,
             location,
@@ -43,6 +45,7 @@ export async function deleteMatch(id: string) {
 
 export async function updateMatch(id: string, formData: FormData) {
     const sportType = formData.get("sportType") as string;
+    const matchType = formData.get("matchType") as string | null;
     const date = formData.get("date") as string;
     const time = formData.get("time") as string;
     const location = formData.get("location") as string;
@@ -58,6 +61,7 @@ export async function updateMatch(id: string, formData: FormData) {
         where: { id },
         data: {
             sportType,
+            matchType: matchType || undefined,
             date: new Date(date),
             time,
             location,
@@ -71,4 +75,26 @@ export async function updateMatch(id: string, formData: FormData) {
     revalidatePath(`/admin/matches/${id}`);
     revalidatePath("/");
     redirect("/admin/matches");
+}
+
+export async function getFootballMatches() {
+    const now = new Date();
+    return await prisma.match.findMany({
+        where: {
+            sportType: "Football",
+            date: {
+                gte: now,
+            },
+        },
+        orderBy: {
+            date: "asc",
+        },
+        include: {
+            bookings: {
+                include: {
+                    user: true,
+                },
+            },
+        },
+    });
 }

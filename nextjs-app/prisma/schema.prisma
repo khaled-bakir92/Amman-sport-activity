@@ -79,6 +79,7 @@ model Match {
   time        String   // e.g. "19:00"
   location    String
   sportType   String   // e.g. "Football", "Volleyball"
+  matchType   String?  // e.g. "11vs11", "6vs6", "Girls Only"
   maxPlayers  Int
   price       Float
   currency    String   @default("JOD")

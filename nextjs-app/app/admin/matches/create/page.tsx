@@ -17,17 +17,33 @@ import { useState } from "react";
 
 import { SPORTS_DATA, SPORT_TYPES } from "@/lib/constants";
 
+const FOOTBALL_MATCH_TYPES = [
+    { value: "11vs11", label: "11 vs 11", maxPlayers: 22 },
+    { value: "6vs6", label: "6 vs 6", maxPlayers: 12 },
+    { value: "Girls Only", label: "Girls Only", maxPlayers: 12 },
+];
+
 export default function CreateMatchPage() {
     const [sport, setSport] = useState("");
+    const [matchType, setMatchType] = useState("");
     const [maxPlayers, setMaxPlayers] = useState(10);
 
     const handleSportChange = (value: string) => {
         setSport(value);
+        setMatchType(""); // Reset match type when sport changes
         const selectedSport = SPORTS_DATA.find((s) => s.title === value);
         if (selectedSport) {
             setMaxPlayers(selectedSport.defaultMaxPlayers);
         } else {
             setMaxPlayers(10);
+        }
+    };
+
+    const handleMatchTypeChange = (value: string) => {
+        setMatchType(value);
+        const selectedType = FOOTBALL_MATCH_TYPES.find((t) => t.value === value);
+        if (selectedType) {
+            setMaxPlayers(selectedType.maxPlayers);
         }
     };
 
@@ -55,6 +71,24 @@ export default function CreateMatchPage() {
                                     </SelectContent>
                                 </Select>
                             </div>
+
+                            {sport === "Football" && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="matchType">Match Type</Label>
+                                    <Select name="matchType" required onValueChange={handleMatchTypeChange}>
+                                        <SelectTrigger className="bg-background">
+                                            <SelectValue placeholder="Select match type" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {FOOTBALL_MATCH_TYPES.map((type) => (
+                                                <SelectItem key={type.value} value={type.value}>
+                                                    {type.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
 
                             <div className="space-y-2">
                                 <Label htmlFor="date">Date</Label>

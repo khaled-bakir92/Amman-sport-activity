@@ -7,10 +7,11 @@ import { Menu, X } from "lucide-react";
 import { AuthButton } from "@/components/auth-button";
 
 const navLinks = [
-  { href: "#sports", label: "Sports" },
-  { href: "#private", label: "Private Lessons" },
-  { href: "#about", label: "About Us" },
-  { href: "#contact", label: "Contact" },
+  { href: "/upcoming", label: "Upcoming" },
+  { href: "/#sports", label: "Sports" },
+  { href: "/#private", label: "Private Lessons" },
+  { href: "/#about", label: "About Us" },
+  { href: "/#contact", label: "Contact" },
 ];
 
 export function Header() {

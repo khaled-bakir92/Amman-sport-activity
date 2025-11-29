@@ -16,16 +16,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState } from "react";
 // import { Match } from "@prisma/client";
 
+const FOOTBALL_MATCH_TYPES = [
+    { value: "11vs11", label: "11 vs 11", maxPlayers: 22 },
+    { value: "6vs6", label: "6 vs 6", maxPlayers: 12 },
+    { value: "Girls Only", label: "Girls Only", maxPlayers: 12 },
+];
+
 interface EditMatchFormProps {
     match: any;
 }
 
 export default function EditMatchForm({ match }: EditMatchFormProps) {
     const [sport, setSport] = useState(match.sportType);
+    const [matchType, setMatchType] = useState(match.matchType || "");
     const [maxPlayers, setMaxPlayers] = useState(match.maxPlayers);
 
     const handleSportChange = (value: string) => {
         setSport(value);
+        setMatchType(""); // Reset match type when sport changes
         switch (value) {
             case "Football":
                 setMaxPlayers(10);
@@ -44,6 +52,14 @@ export default function EditMatchForm({ match }: EditMatchFormProps) {
                 break;
             default:
                 setMaxPlayers(10);
+        }
+    };
+
+    const handleMatchTypeChange = (value: string) => {
+        setMatchType(value);
+        const selectedType = FOOTBALL_MATCH_TYPES.find((t) => t.value === value);
+        if (selectedType) {
+            setMaxPlayers(selectedType.maxPlayers);
         }
     };
 
@@ -72,6 +88,24 @@ export default function EditMatchForm({ match }: EditMatchFormProps) {
                                 </SelectContent>
                             </Select>
                         </div>
+
+                        {sport === "Football" && (
+                            <div className="space-y-2">
+                                <Label htmlFor="matchType">Match Type</Label>
+                                <Select name="matchType" required value={matchType} onValueChange={handleMatchTypeChange}>
+                                    <SelectTrigger className="bg-background">
+                                        <SelectValue placeholder="Select match type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {FOOTBALL_MATCH_TYPES.map((type) => (
+                                            <SelectItem key={type.value} value={type.value}>
+                                                {type.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
 
                         <div className="space-y-2">
                             <Label htmlFor="date">Date</Label>
